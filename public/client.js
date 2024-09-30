@@ -1,7 +1,7 @@
 // import * as THREE from 'three';
+
 // Connexion au serveur Socket.IO
 const socket = io();
-
 // Création de la scène Three.js
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
@@ -11,6 +11,7 @@ document.body.appendChild(renderer.domElement);
 
 // Liste des cubes joueurs et colliders
 const players = {};
+const serverPlayersClient = {};
 const colliders = {};
 const walls = {};
 
@@ -86,8 +87,6 @@ camera.position.set(0, 20, 0); // Positionner la caméra au-dessus du centre du 
 camera.lookAt(0, 0, 0); // La caméra regarde vers le centre du plan
 camera.rotation.z = -Math.PI / 2; // Rotation de 180 degrés 
 
-
-
 // Création de cubes pour chaque joueur avec un collider
 function createPlayerCube(player) {
     const geometry = new THREE.BoxGeometry(1, 1, 1);
@@ -101,18 +100,24 @@ function createPlayerCube(player) {
     return cube;
 }
 
+const pseudonym = prompt("Entrez votre pseudonyme :");
+socket.emit('newPlayer', { pseudonym });
 
 // Initialisation des joueurs lorsque la connexion est établie
 socket.on('init', (serverPlayers) => {
     for (let id in serverPlayers) {
         players[id] = createPlayerCube(serverPlayers[id]);
+        serverPlayersClient[id] = serverPlayers[id];
     }
+    updatePlayerList(serverPlayersClient);
 });
 
 
 // Ajout d'un nouveau joueur
 socket.on('newPlayer', (player) => {
     players[player.id] = createPlayerCube(player);
+    serverPlayersClient[player.id] = player;
+    updatePlayerList(serverPlayersClient);
 });
 
 
@@ -133,9 +138,34 @@ socket.on('playerDisconnected', (id) => {
         scene.remove(players[id]);
         delete players[id];
         delete colliders[id]; // Supprimer également le collider
+        delete serverPlayersClient[id];
+        updatePlayerList(serverPlayersClient);
     }
 });
 
+function updatePlayerList(playersList) {
+    const playerListDiv = document.getElementById('playerList');
+    playerListDiv.innerHTML = ''; // Vider la liste actuelle
+
+    Object.keys(playersList).forEach((id) => {
+        const player = playersList[id];
+        console.log(player);
+        const playerDiv = document.createElement('div');
+        playerDiv.className = 'player';
+
+        const colorDiv = document.createElement('div');
+        colorDiv.className = 'color';
+        colorDiv.style.backgroundColor = player.color;
+
+        const nameDiv = document.createElement('div');
+        nameDiv.className = 'name';
+        nameDiv.textContent = player.pseudonym;
+
+        playerDiv.appendChild(colorDiv);
+        playerDiv.appendChild(nameDiv);
+        playerListDiv.appendChild(playerDiv);
+    });
+}
 
 // Contrôle du joueur local (utilisation des touches de direction)
 const moveSpeed = 0.1;

@@ -20,48 +20,54 @@ let players = {};
 
 // Gestion des événements lorsqu'un utilisateur se connecte au serveur
 io.on('connection', (socket) => {
-    console.log('Nouvel utilisateur connecté :', socket.id);
+    
 
     // Lorsqu'un nouveau joueur se connecte, on lui attribue un cube dans l'espace 3D.
     // Les coordonnées X et Z sont générées aléatoirement pour placer chaque joueur à un endroit différent.
     // Chaque joueur a aussi une couleur aléatoire.
-    players[socket.id] = {
-        id: socket.id, // ID unique pour identifier le joueur
-        x: Math.random() * 10 - 5, // Position X du joueur (aléatoire)
-        y: 0, // Position Y (0 car les joueurs sont sur le sol)
-        z: Math.random() * 10 - 5, // Position Z du joueur (aléatoire)
-        color: '#' + Math.floor(Math.random() * 16777215).toString(16) // Couleur aléatoire
-    };
+        socket.on('newPlayer', (data) => {
+            
+            const player = {
+                id: socket.id,
+                pseudonym: data.pseudonym,
+                x: Math.random() * 10 - 5, // Position X du joueur (aléatoire)
+                y: 0, // Position Y (0 car les joueurs sont sur le sol)
+                z: Math.random() * 10 - 5, // Position Z du joueur (aléatoire)
+                color: '#' + Math.floor(Math.random() * 16777215).toString(16) // Couleur aléatoire
+            };
+            players[socket.id] = player;
+            console.log('Nouvel utilisateur connecté :', player.pseudonym);
 
-    // Envoyer la liste de tous les joueurs actuels au nouveau joueur
-    socket.emit('init', players);
+            // Envoyer la liste de tous les joueurs actuels au nouveau joueur
+            socket.emit('init', players);
 
-    // Informer tous les autres joueurs qu'un nouveau joueur vient de se connecter
-    socket.broadcast.emit('newPlayer', players[socket.id]);
+            // Informer tous les autres joueurs qu'un nouveau joueur vient de se connecter
+            socket.broadcast.emit('newPlayer', players[socket.id]);
 
-    // Lorsqu'un joueur se déplace, il envoie sa nouvelle position au serveur
-    socket.on('move', (data) => {
-        // Mettre à jour la position du joueur dans la liste des joueurs
-        players[socket.id].x = data.x;
-        players[socket.id].z = data.z;
+            // Lorsqu'un joueur se déplace, il envoie sa nouvelle position au serveur
+            socket.on('move', (data) => {
+                // Mettre à jour la position du joueur dans la liste des joueurs
+                players[socket.id].x = data.x;
+                players[socket.id].z = data.z;
 
-        // Envoyer les nouvelles coordonnées du joueur à tous les autres joueurs connectés
-        socket.broadcast.emit('playerMoved', players[socket.id]);
+                // Envoyer les nouvelles coordonnées du joueur à tous les autres joueurs connectés
+                socket.broadcast.emit('playerMoved', players[socket.id]);
+            });
+
+            // Gestion de la déconnexion d'un joueur
+            socket.on('disconnect', () => {
+                console.log('Utilisateur déconnecté :', socket.pseudonym);
+
+                // Retirer le joueur de la liste des joueurs connectés
+                delete players[socket.id];
+
+                // Informer tous les autres joueurs qu'un joueur s'est déconnecté
+                io.emit('playerDisconnected', socket.id);
+            });
+        });
     });
 
-    // Gestion de la déconnexion d'un joueur
-    socket.on('disconnect', () => {
-        console.log('Utilisateur déconnecté :', socket.id);
-
-        // Retirer le joueur de la liste des joueurs connectés
-        delete players[socket.id];
-
-        // Informer tous les autres joueurs qu'un joueur s'est déconnecté
-        io.emit('playerDisconnected', socket.id);
-    });
-});
-
-// Le serveur écoute les connexions sur le port 3000
-server.listen(3000, () => {
-    console.log('Serveur démarré sur le port 3000');
-});
+        // Le serveur écoute les connexions sur le port 3000
+        server.listen(3000, () => {
+            console.log('Serveur démarré sur le port 3000');
+        });

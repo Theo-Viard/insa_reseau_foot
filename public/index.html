@@ -12,5 +12,28 @@
 	<script src="/socket.io/socket.io.js"></script>
     <script src="three.min.js"></script>
 	<script type="module" src="client.js"></script>
+    <div id="playerList"></div>
 </body>
+<style>
+    #playerList {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: rgba(255, 255, 255, 0.8);
+        padding: 10px;
+        border-radius: 5px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    }
+    .player {
+        display: flex;
+        align-items: center;
+        margin-bottom: 5px;
+    }
+    .player .color {
+        width: 20px;
+        height: 20px;
+        margin-right: 10px;
+        border: 1px solid #000;
+    }
+</style>
 </html>
