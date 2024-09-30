@@ -1,26 +1,91 @@
+// import * as THREE from 'three';
 // Connexion au serveur Socket.IO
 const socket = io();
 
-
 // Création de la scène Three.js
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
 const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-
-// Création d'un plan au sol
-const geometry = new THREE.PlaneGeometry(20, 20);
-const material = new THREE.MeshBasicMaterial({ color: 0x808080, side: THREE.DoubleSide });
-const plane = new THREE.Mesh(geometry, material);
-plane.rotation.x = Math.PI / 2;
-scene.add(plane);
-
-
 // Liste des cubes joueurs et colliders
 const players = {};
 const colliders = {};
+const walls = {};
+
+// Création d'un plan au sol
+const geometryPlan = new THREE.PlaneGeometry(20, 40);
+const materialPlan = new THREE.MeshBasicMaterial({ color: 0x808080, side: THREE.DoubleSide });
+const plane = new THREE.Mesh(geometryPlan, materialPlan);
+plane.rotation.x = -Math.PI / 2; // Rotation pour que le plan soit horizontal
+scene.add(plane);
+
+// Création d'une ligne blanche centrale sur le plan
+const materialLine = new THREE.LineBasicMaterial({ color: 0xffffff, linewidth : 5});
+const points = [];
+points.push(new THREE.Vector3(-9.9, 0.1, 0)); // Ajuster la position de la ligne
+points.push(new THREE.Vector3(9.9, 0.1, 0)); // Ajuster la position de la ligne
+const geometryLine = new THREE.BufferGeometry().setFromPoints(points);
+const line = new THREE.Line(geometryLine, materialLine);
+scene.add(line);
+
+// Création d'un cercle central sur le plan
+const geometryCircle = new THREE.RingGeometry(4.9, 5, 32); // Rayon intérieur de 4.9 unités, rayon extérieur de 5 unités, 32 segments
+const materialCircle = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide });
+const circle = new THREE.Mesh(geometryCircle, materialCircle);
+circle.rotation.x = -Math.PI / 2; // Rotation pour que le cercle soit horizontal
+circle.position.set(0, 0.1, 0); // Positionner le cercle légèrement au-dessus du plan pour éviter le z-fighting
+scene.add(circle);
+
+// Création des buts
+function createGoal(x, z) {
+    const postMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    
+    // Poteaux
+    const postGeometry = new THREE.BoxGeometry(0.2, 2.44, 0.2); // Largeur, hauteur, profondeur
+    const leftPost = new THREE.Mesh(postGeometry, postMaterial);
+    leftPost.position.set(x - 3.66, 1.22, z); // Positionner le poteau gauche
+    scene.add(leftPost);
+    
+    const rightPost = new THREE.Mesh(postGeometry, postMaterial);
+    rightPost.position.set(x + 3.66, 1.22, z); // Positionner le poteau droit
+    scene.add(rightPost);
+    
+    // Barre transversale
+    const barGeometry = new THREE.BoxGeometry(0.2, 0.2, 7.32); // Largeur, hauteur, profondeur
+    const crossbar = new THREE.Mesh(barGeometry, postMaterial);
+    crossbar.position.set(x, 2.44, z); // Positionner la barre transversale
+    crossbar.rotation.y = -Math.PI / 2; // Rotation de 90 degrés
+    scene.add(crossbar);
+}
+
+// Ajouter les buts aux deux extrémités du terrain
+createGoal(0, -20); // But à une extrémité
+createGoal(0, 20); // But à l'autre extrémité
+
+// Création des surfaces de collision invisibles en bordure du terrain
+function createCollisionSurface(x, z, width, height, depth, id_wall) {
+    const collisionGeometry = new THREE.BoxGeometry(width, height, depth);
+    const collisionMaterial = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0 });
+    const collisionSurface = new THREE.Mesh(collisionGeometry, collisionMaterial);
+    collisionSurface.position.set(x, height / 2, z); // Positionner la surface de collision
+    const wallCollider = new THREE.Box3().setFromObject(collisionSurface);
+    walls[id_wall] = wallCollider;
+    scene.add(collisionSurface);
+}
+
+// Ajouter les surfaces de collision autour du terrain
+createCollisionSurface(0, -20, 20, 2, 0.5, 1); // Surface de collision en bas
+createCollisionSurface(0, 20, 20, 2, 0.5, 2); // Surface de collision en haut
+createCollisionSurface(-10, 0, 0.5, 2, 40, 3); // Surface de collision à gauche
+createCollisionSurface(10, 0, 0.5, 2, 40, 4); // Surface de collision à droite
+
+// Positionner la caméra au-dessus du centre du plan
+camera.position.set(0, 20, 0); // Positionner la caméra au-dessus du centre du plan
+camera.lookAt(0, 0, 0); // La caméra regarde vers le centre du plan
+camera.rotation.z = -Math.PI / 2; // Rotation de 180 degrés 
+
 
 
 // Création de cubes pour chaque joueur avec un collider
@@ -30,13 +95,9 @@ function createPlayerCube(player) {
     const cube = new THREE.Mesh(geometry, material);
     cube.position.set(player.x, player.y, player.z);
     scene.add(cube);
-
-
     // Créer un collider (bounding box) pour ce cube 
     const collider = new THREE.Box3().setFromObject(cube);
     colliders[player.id] = collider;
-
-
     return cube;
 }
 
@@ -59,7 +120,6 @@ socket.on('newPlayer', (player) => {
 socket.on('playerMoved', (player) => {
     if (players[player.id]) {
         players[player.id].position.set(player.x, player.y, player.z);
-
 
         // Mettre à jour le collider du joueur déplacé
         colliders[player.id].setFromObject(players[player.id]);
@@ -103,7 +163,12 @@ document.addEventListener('keydown', (event) => {
                 break;
             }
         }
-
+        for (let id in walls) {
+            if (walls[id].intersectsBox(colliders[socket.id])) {
+                collisionDetected = true;
+                break;
+            }
+        }
 
         // Si collision, annuler le mouvement
         if (collisionDetected) {
@@ -114,12 +179,6 @@ document.addEventListener('keydown', (event) => {
         }
     }
 });
-
-
-// Positionnement de la caméra
-camera.position.set(0, 5, 10);
-camera.lookAt(0, 0, 0);
-
 
 // Fonction de rendu
 function animate() {
