@@ -17,6 +17,7 @@ const players = {};
 const serverPlayersClient = {};
 const colliders = {};
 const walls = {};
+let ball;
 
 // Création d'un plan au sol
 const geometryPlan = new THREE.PlaneGeometry(20, 40);
@@ -105,11 +106,11 @@ function createPlayerCube(player) {
     return cube;
 }
 // Création de la balle au milieu du terrain
-function createBall() {
+function createBall(ballEmit) {
     const ballGeometry = new THREE.SphereGeometry(0.5, 32, 32); // Rayon de 0.5 unités, 32 segments horizontaux et verticaux
-    const ballMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    const ballMaterial = new THREE.MeshBasicMaterial({ color: ballEmit.color });
     const ball = new THREE.Mesh(ballGeometry, ballMaterial);
-    ball.position.set(0, 0.5, 0); // Positionner la balle au centre du terrain
+    ball.position.set(ballEmit.x, ballEmit.y, ballEmit.z);
     scene.add(ball);
     
     // Créer un collider (bounding sphere) pour la balle
@@ -118,7 +119,6 @@ function createBall() {
     return ball;
 }
 // Ajouter la balle à la scène
-const ball = createBall();
 
 
 /* Gestion des événements Socket.IO *//////////////////////////////////////////////////////////////////////////////////////
@@ -135,6 +135,10 @@ socket.on('init', (serverPlayers) => {
     updatePlayerList(serverPlayersClient);
 });
 
+// Initialisation de la balle
+socket.on('ballInit', (ballEmit) => {
+    ball = createBall(ballEmit);
+});
 
 // Ajout d'un nouveau joueur
 socket.on('newPlayer', (player) => {
@@ -154,7 +158,10 @@ socket.on('playerMoved', (player) => {
     }
 });
 
-
+socket.on('ballMoved', (data) => {
+    ball.position.set(data.x, data.y, data.z);
+    ball.boundingBox.setFromObject(ball);
+});
 // Suppression d'un joueur déconnecté
 socket.on('playerDisconnected', (id) => {
     if (players[id]) {
@@ -237,7 +244,7 @@ document.addEventListener('keydown', (event) => {
             ball.position.x += player.position.x - prevPosition.x;
             ball.position.z += player.position.z - prevPosition.z;
             colliders['ball'].setFromObject(ball);
-            
+            socket.emit('moveBall', { x: ball.position.x, y: ball.position.y, z: ball.position.z });
         }
 
     }

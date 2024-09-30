@@ -18,9 +18,15 @@ app.use(express.static(__dirname + '/public'));
 // Variable pour stocker les joueurs connectés, chaque joueur sera identifié par un ID unique
 let players = {};
 
+const ball = {
+    x: 0,
+    y: 0.5,
+    z: 0,
+    color: '#123456'
+};
+
 // Gestion des événements lorsqu'un utilisateur se connecte au serveur
 io.on('connection', (socket) => {
-    
 
     // Lorsqu'un nouveau joueur se connecte, on lui attribue un cube dans l'espace 3D.
     // Les coordonnées X et Z sont générées aléatoirement pour placer chaque joueur à un endroit différent.
@@ -40,7 +46,7 @@ io.on('connection', (socket) => {
 
             // Envoyer la liste de tous les joueurs actuels au nouveau joueur
             socket.emit('init', players);
-
+            socket.emit('ballInit', ball);
             // Informer tous les autres joueurs qu'un nouveau joueur vient de se connecter
             socket.broadcast.emit('newPlayer', players[socket.id]);
 
@@ -52,6 +58,15 @@ io.on('connection', (socket) => {
 
                 // Envoyer les nouvelles coordonnées du joueur à tous les autres joueurs connectés
                 socket.broadcast.emit('playerMoved', players[socket.id]);
+            });
+
+            // Mouvement de la balle
+            socket.on('moveBall', (data) => {
+                ball.x = data.x;
+                ball.y = data.y;
+                ball.z = data.z;
+
+                io.emit('ballMoved', ball);
             });
 
             // Gestion de la déconnexion d'un joueur
