@@ -56,7 +56,7 @@ io.on('connection', (socket) => {
 
             // Gestion de la déconnexion d'un joueur
             socket.on('disconnect', () => {
-                console.log('Utilisateur déconnecté :', socket.pseudonym);
+                console.log('Utilisateur déconnecté :', players[socket.id].pseudonym);
 
                 // Retirer le joueur de la liste des joueurs connectés
                 delete players[socket.id];

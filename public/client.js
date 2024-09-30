@@ -2,6 +2,9 @@
 
 // Connexion au serveur Socket.IO
 const socket = io();
+
+/* Initialisation de la scène Three.js *//////////////////////////////////////////////////////////////////////////////////////
+
 // Création de la scène Three.js
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
@@ -83,9 +86,11 @@ createCollisionSurface(-10, 0, 0.5, 2, 40, 3); // Surface de collision à gauche
 createCollisionSurface(10, 0, 0.5, 2, 40, 4); // Surface de collision à droite
 
 // Positionner la caméra au-dessus du centre du plan
-camera.position.set(0, 20, 0); // Positionner la caméra au-dessus du centre du plan
+camera.position.set(-10, 20, 0); // Positionner la caméra au-dessus du centre du plan
 camera.lookAt(0, 0, 0); // La caméra regarde vers le centre du plan
 camera.rotation.z = -Math.PI / 2; // Rotation de 180 degrés 
+
+/* Initialisation des items dynamiques *//////////////////////////////////////////////////////////////////////////////////////
 
 // Création de cubes pour chaque joueur avec un collider
 function createPlayerCube(player) {
@@ -99,6 +104,24 @@ function createPlayerCube(player) {
     colliders[player.id] = collider;
     return cube;
 }
+// Création de la balle au milieu du terrain
+function createBall() {
+    const ballGeometry = new THREE.SphereGeometry(0.5, 32, 32); // Rayon de 0.5 unités, 32 segments horizontaux et verticaux
+    const ballMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    const ball = new THREE.Mesh(ballGeometry, ballMaterial);
+    ball.position.set(0, 0.5, 0); // Positionner la balle au centre du terrain
+    scene.add(ball);
+    
+    // Créer un collider (bounding sphere) pour la balle
+    const ballCollider = new THREE.Box3().setFromObject(ball); // j'ai pas réussi autrement
+    colliders['ball'] = ballCollider;
+    return ball;
+}
+// Ajouter la balle à la scène
+const ball = createBall();
+
+
+/* Gestion des événements Socket.IO *//////////////////////////////////////////////////////////////////////////////////////
 
 const pseudonym = prompt("Entrez votre pseudonyme :");
 socket.emit('newPlayer', { pseudonym });
@@ -175,10 +198,10 @@ document.addEventListener('keydown', (event) => {
         let prevPosition = player.position.clone(); // Stocker l'ancienne position
 
 
-        if (event.key === 'ArrowUp') player.position.z -= moveSpeed;
-        if (event.key === 'ArrowDown') player.position.z += moveSpeed;
-        if (event.key === 'ArrowLeft') player.position.x -= moveSpeed;
-        if (event.key === 'ArrowRight') player.position.x += moveSpeed;
+        if (event.key === 'ArrowUp') player.position.x += moveSpeed;
+        if (event.key === 'ArrowDown') player.position.x -= moveSpeed;
+        if (event.key === 'ArrowLeft') player.position.z -= moveSpeed;
+        if (event.key === 'ArrowRight') player.position.z += moveSpeed;
 
 
         // Mettre à jour le collider du joueur
@@ -188,7 +211,7 @@ document.addEventListener('keydown', (event) => {
         // Vérifier les collisions avec les autres joueurs
         let collisionDetected = false;
         for (let id in colliders) {
-            if (id !== socket.id && colliders[socket.id].intersectsBox(colliders[id])) {
+            if (id !== socket.id && colliders[socket.id].intersectsBox(colliders[id]) && id !== 'ball'){
                 collisionDetected = true;
                 break;
             }
@@ -207,6 +230,16 @@ document.addEventListener('keydown', (event) => {
             // Envoi des nouvelles positions au serveur uniquement si pas de collision
             socket.emit('move', { x: player.position.x, z: player.position.z });
         }
+
+        // Vérifier les collisions avec la balle
+        if (colliders[socket.id].intersectsBox(colliders['ball'])) {
+            // Si collision avec la balle, déplacer la balle en fonction du mouvement du joueur
+            ball.position.x += player.position.x - prevPosition.x;
+            ball.position.z += player.position.z - prevPosition.z;
+            colliders['ball'].setFromObject(ball);
+            
+        }
+
     }
 });
 
