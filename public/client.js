@@ -43,6 +43,30 @@ circle.rotation.x = -Math.PI / 2; // Rotation pour que le cercle soit horizontal
 circle.position.set(0, 0.1, 0); // Positionner le cercle légèrement au-dessus du plan pour éviter le z-fighting
 scene.add(circle);
 
+// Le score est affiché en tant que texture sur le plan
+function createTextTexture(text, fontSize = 64, color = 'white') {
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+    context.font = `${fontSize}px Arial`;
+    context.fillStyle = color;
+    context.fillText(text, 0, fontSize);
+
+    const texture = new THREE.CanvasTexture(canvas);
+    return texture;
+}
+
+function createScoreSprite(text) {
+    const texture = createTextTexture(text);
+    const material = new THREE.SpriteMaterial({ map: texture });
+    const sprite = new THREE.Sprite(material);
+    sprite.scale.set(10, 5, 1); // Adjust the scale as needed
+    return sprite;
+}
+
+// Create the score sprite and add it to the scene
+const scoreSprite = createScoreSprite('Score: 0');
+scoreSprite.position.set(0, 12, 1); // Position the score at the top of the screen
+scene.add(scoreSprite);
 // Création des buts
 function createGoal(x, z) {
     const postMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
@@ -92,6 +116,20 @@ camera.lookAt(0, 0, 0); // La caméra regarde vers le centre du plan
 camera.rotation.z = -Math.PI / 2; // Rotation de 180 degrés 
 
 /* Initialisation des items dynamiques *//////////////////////////////////////////////////////////////////////////////////////
+
+let score = 0;
+
+function updateScore(newScore) {
+    score = newScore;
+    const texture = createTextTexture(`Score: ${score}`);
+    scoreSprite.material.map = texture;
+    scoreSprite.material.needsUpdate = true;
+}
+
+// Example: Update the score when a goal is scored
+function onGoalScored() {
+    updateScore(score + 1);
+}
 
 // Création de cubes pour chaque joueur avec un collider
 function createPlayerCube(player) {
@@ -275,11 +313,22 @@ function updatePlayerMovement() {
     }
 }
 
+// Example: Call onGoalScored when a goal is detected
+function checkGoal() {
+    // Check if the ball is in the goal
+    if (ball.position.z > 20 || ball.position.z < -20) {
+        onGoalScored();
+        // Reset the ball position
+        ball.position.set(0, 0.5, 0);
+        socket.emit('moveBall', { x: ball.position.x, y: ball.position.y, z: ball.position.z });
+    }
+}
 
 // Fonction de rendu
 function animate() {
     requestAnimationFrame(animate);
     updatePlayerMovement();
+    checkGoal();
     renderer.render(scene, camera);
 }
 animate();
