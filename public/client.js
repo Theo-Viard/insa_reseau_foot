@@ -17,6 +17,7 @@ const players = {};
 const serverPlayersClient = {};
 const colliders = {};
 const walls = {};
+const score = { left: 0, right: 0 };
 let ball;
 
 // Création d'un plan au sol
@@ -27,7 +28,7 @@ plane.rotation.x = -Math.PI / 2; // Rotation pour que le plan soit horizontal
 scene.add(plane);
 
 // Création d'une ligne blanche centrale sur le plan
-const materialLine = new THREE.LineBasicMaterial({ color: 0xffffff, linewidth : 5});
+const materialLine = new THREE.LineBasicMaterial({ color: 0xffffff, linewidth: 5 });
 const points = [];
 points.push(new THREE.Vector3(-9.9, 0.1, 0)); // Ajuster la position de la ligne
 points.push(new THREE.Vector3(9.9, 0.1, 0)); // Ajuster la position de la ligne
@@ -64,23 +65,23 @@ function createScoreSprite(text) {
 }
 
 // Create the score sprite and add it to the scene
-const scoreSprite = createScoreSprite('Score: 0');
+const scoreSprite = createScoreSprite(`${score.left} - ${score.right}`);
 scoreSprite.position.set(0, 12, 1); // Position the score at the top of the screen
 scene.add(scoreSprite);
 // Création des buts
 function createGoal(x, z) {
     const postMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
-    
+
     // Poteaux
     const postGeometry = new THREE.BoxGeometry(0.2, 2.44, 0.2); // Largeur, hauteur, profondeur
     const leftPost = new THREE.Mesh(postGeometry, postMaterial);
     leftPost.position.set(x - 3.66, 1.22, z); // Positionner le poteau gauche
     scene.add(leftPost);
-    
+
     const rightPost = new THREE.Mesh(postGeometry, postMaterial);
     rightPost.position.set(x + 3.66, 1.22, z); // Positionner le poteau droit
     scene.add(rightPost);
-    
+
     // Barre transversale
     const barGeometry = new THREE.BoxGeometry(0.2, 0.2, 7.32); // Largeur, hauteur, profondeur
     const crossbar = new THREE.Mesh(barGeometry, postMaterial);
@@ -117,18 +118,16 @@ camera.rotation.z = -Math.PI / 2; // Rotation de 180 degrés
 
 /* Initialisation des items dynamiques *//////////////////////////////////////////////////////////////////////////////////////
 
-let score = 0;
 
-function updateScore(newScore) {
-    score = newScore;
-    const texture = createTextTexture(`Score: ${score}`);
+function updateScore() {
+    const texture = createTextTexture(`${score.left} - ${score.right}`);
     scoreSprite.material.map = texture;
     scoreSprite.material.needsUpdate = true;
 }
 
 // Example: Update the score when a goal is scored
 function onGoalScored() {
-    updateScore(score + 1);
+    updateScore();
 }
 
 // Création de cubes pour chaque joueur avec un collider
@@ -150,7 +149,7 @@ function createBall(ballEmit) {
     const ball = new THREE.Mesh(ballGeometry, ballMaterial);
     ball.position.set(ballEmit.x, ballEmit.y, ballEmit.z);
     scene.add(ball);
-    
+
     // Créer un collider (bounding sphere) pour la balle
     const ballCollider = new THREE.Box3().setFromObject(ball); // j'ai pas réussi autrement
     colliders['ball'] = ballCollider;
@@ -198,7 +197,6 @@ socket.on('playerMoved', (player) => {
 
 socket.on('ballMoved', (data) => {
     ball.position.set(data.x, data.y, data.z);
-    ball.boundingBox.setFromObject(ball);
 });
 // Suppression d'un joueur déconnecté
 socket.on('playerDisconnected', (id) => {
@@ -316,11 +314,18 @@ function updatePlayerMovement() {
 // Example: Call onGoalScored when a goal is detected
 function checkGoal() {
     // Check if the ball is in the goal
-    if (ball.position.z > 20 || ball.position.z < -20) {
+    if (ball.position.z > 20) {
+        score.right++;
         onGoalScored();
-        // Reset the ball position
         ball.position.set(0, 0.5, 0);
         socket.emit('moveBall', { x: ball.position.x, y: ball.position.y, z: ball.position.z });
+    }
+    if (ball.position.z < -20) {
+        score.left++;
+        onGoalScored();
+        ball.position.set(0, 0.5, 0);
+        socket.emit('moveBall', { x: ball.position.x, y: ball.position.y, z: ball.position.z });
+
     }
 }
 

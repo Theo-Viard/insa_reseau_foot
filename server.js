@@ -25,6 +25,8 @@ const ball = {
     color: '#123456'
 };
 
+const score = { left : 0, right : 0 };
+
 // Gestion des événements lorsqu'un utilisateur se connecte au serveur
 io.on('connection', (socket) => {
 
@@ -67,6 +69,16 @@ io.on('connection', (socket) => {
                 ball.z = data.z;
 
                 io.emit('ballMoved', ball);
+            });
+
+            // Gestion des scores
+            socket.on('score', (data) => {
+                if (data.left) {
+                    score.left++;
+                } else {
+                    score.right++;
+                }
+                io.emit('score', score);
             });
 
             // Gestion de la déconnexion d'un joueur
