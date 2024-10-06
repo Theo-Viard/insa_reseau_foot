@@ -1,5 +1,3 @@
-let Ball = null;
-
 export function createBall(ballData, scene, colliders) {
     const ballGeometry = new THREE.SphereGeometry(0.5, 32, 32);
     const ballMaterial = new THREE.MeshBasicMaterial({ color: ballData.color });
@@ -11,7 +9,6 @@ export function createBall(ballData, scene, colliders) {
     const ballCollider = new THREE.Box3().setFromObject(ball);
     colliders['ball'] = ballCollider;
 
-    Ball = ball;
     return ball;
 }
 
@@ -20,6 +17,16 @@ export function getBallData() {
 }
 
 export function updateBallPosition(data, ball) {
+    console.log('Moving ball:', data);
     ball.position.set(data.x, data.y, data.z);
-    Ball = ball;
+}
+
+export function resetBall(ball, colliders) {
+    if (ball) {
+        console.log('Resetting ball position');
+        ball.position.set(0, 0.5, 0); // Réinitialiser la position de la balle au centre
+        colliders['ball'].setFromObject(ball); // Mettre à jour le collider de la balle
+    } else {
+        console.log('Ball is not defined');
+    }
 }

@@ -1,6 +1,6 @@
 import { createPlayerCube } from './player.js';
 import { updateScore } from './scene.js';
-import { updateBallPosition, getBallData } from './ball.js';
+import { updateBallPosition, resetBall } from './ball.js';
 
 export function initSocket(players, colliders, scene, onBallInit, updatePlayerList) {
     const socket = io();
@@ -26,6 +26,11 @@ export function initSocket(players, colliders, scene, onBallInit, updatePlayerLi
         onBallInit(ballData);  // Appelle la fonction pour créer la balle
     });
 
+    // Initialisation du score
+    socket.on('scoreInit', (score) => {
+        updateScore(score);  // Mettre à jour l'affichage du score
+    });
+
     // Ajout d'un nouveau joueur
     socket.on('newPlayer', (player) => {
         if (!players[player.id]) {
@@ -34,17 +39,10 @@ export function initSocket(players, colliders, scene, onBallInit, updatePlayerLi
         }
     });
 
-    // Écouter l'événement scored et mettre à jour le score
-    socket.on('scored', (score, ballData) => {
-        console.log('Scored:', score);
-        updateScore(score); // Mettre à jour l'affichage du score
-        updateBallPosition(ballData, getBallData()); // Réinitialiser la balle au centre
-    });
-
     return socket;
 }
 
-export function handleSocketEvents(socket, players, colliders, scene, onBallMoved, updatePlayerList) {
+export function handleSocketEvents(socket, players, colliders, scene, onBallMoved, updatePlayerList, getBall) {
     // Mettre à jour la position d'un joueur
     socket.on('playerMoved', (player) => {
         if (players[player.id]) {
@@ -66,5 +64,11 @@ export function handleSocketEvents(socket, players, colliders, scene, onBallMove
             delete colliders[id];  // Supprimer aussi le collider
             updatePlayerList(players);  // Mettre à jour la liste des joueurs restants
         }
+    });
+
+    socket.on('scored', (score) => {
+        console.log('Scored:', score);
+        updateScore(score); // Mettre à jour l'affichage du score
+        onBallMoved({ x: 0, y: 0.5, z: 0 });  // Réinitialiser la position de la balle
     });
 }

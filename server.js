@@ -24,7 +24,7 @@ const ball = {
     z: 0,
     color: '#123456'
 };
-
+let lastGoal = Date.now();
 const score = { left: 0, right: 0 };
 
 // Gestion des événements lorsqu'un utilisateur se connecte au serveur
@@ -49,6 +49,7 @@ io.on('connection', (socket) => {
         // Envoyer la liste de tous les joueurs actuels au nouveau joueur
         socket.emit('init', players);
         socket.emit('ballInit', ball);
+        socket.emit('scoreInit', score);
         // Informer tous les autres joueurs qu'un nouveau joueur vient de se connecter
         socket.broadcast.emit('newPlayer', players[socket.id]);
 
@@ -78,7 +79,10 @@ io.on('connection', (socket) => {
             } else {
                 score.right++;
             }
-            io.emit('scored', score, ball);
+            ball.x = 0;
+            ball.y = 0.5;
+            ball.z = 0;
+            io.emit('scored', score);
         });
 
         // Gestion de la déconnexion d'un joueur

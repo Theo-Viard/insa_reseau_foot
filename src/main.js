@@ -1,5 +1,5 @@
 import { createScene, createRenderer, createCamera, createObjects, createGoals } from './scene.js';
-import {updatePlayerMovement } from './player.js';
+import { updatePlayerMovement } from './player.js';
 import { createBall, updateBallPosition } from './ball.js';
 import { initSocket, handleSocketEvents } from './socket.js';
 
@@ -26,11 +26,10 @@ const socket = initSocket(players, colliders, scene, (ballData) => {
 // Gérer les événements liés aux autres joueurs
 handleSocketEvents(socket, players, colliders, scene, (data) => {
     updateBallPosition(data, ball);  // Passer l'instance de la balle ici
-}, updatePlayerList);
+}, updatePlayerList, () => ball);  // Passer une fonction qui retourne la balle
 
 document.addEventListener('keydown', (event) => keysPressed[event.key] = true);
 document.addEventListener('keyup', (event) => keysPressed[event.key] = false);
-
 
 // Fonction pour mettre à jour la liste des joueurs
 function updatePlayerList(players) {

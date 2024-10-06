@@ -1,3 +1,5 @@
+import {resetBall} from './ball.js'
+
 export function createPlayerCube(playerData, scene, colliders) {
     const geometry = new THREE.BoxGeometry(1, 1, 1);
     const material = new THREE.MeshBasicMaterial({ color: playerData.color });
@@ -13,6 +15,7 @@ export function createPlayerCube(playerData, scene, colliders) {
 }
 
 export function updatePlayerMovement(players, ball, keysPressed, colliders, moveSpeed, socket, walls) {
+
     const player = players[socket.id];  // Utiliser l'ID du joueur pour se déplacer uniquement lui
     if (!player) return;
 
@@ -70,41 +73,25 @@ export function updatePlayerMovement(players, ball, keysPressed, colliders, move
             // Si collision avec la balle, déplacer la balle en fonction du mouvement du joueur
             ball.position.x += player.position.x - prevPosition.x;
             ball.position.z += player.position.z - prevPosition.z;
-            
+
             // Si la balle rencontre un mur, annuler le mouvement de la balle et du joueur et mettre la balle dernière le joueur
             if (colliders['ball'].intersectsBox(walls['gauche'])) {
-                ball.position.x = player.position.x + 1;
-                if(ball.position.x < 3.6 && ball.position.x > -3.6 && ball.position.z < -19.2){
+                if (ball.position.x < 3.6 && ball.position.x > -3.6) {
                     socket.emit('score', { left: true });
+                    resetBall(ball, colliders);
                 }
-                if(ball.position.x < 3.6 && ball.position.x > -3.6 && ball.position.z > 19.2){
-                    socket.emit('score', { left: false });
-                }
+                else { ball.position.z = player.position.z + 1; }
             } else if (colliders['ball'].intersectsBox(walls['droite'])) {
-                ball.position.x = player.position.x - 1;
-                if(ball.position.x < 3.6 && ball.position.x > -3.6 && ball.position.z < -19.2){
-                    socket.emit('score', { left: true });
-                }
-                if(ball.position.x < 3.6 && ball.position.x > -3.6 && ball.position.z > 19.2){
+                if (ball.position.x < 3.6 && ball.position.x > -3.6) {
                     socket.emit('score', { left: false });
+                    resetBall(ball, colliders);
                 }
+                else { ball.position.z = player.position.z - 1; }
             }
             if (colliders['ball'].intersectsBox(walls['top'])) {
-                ball.position.z = player.position.z - 1;
-                if(ball.position.x < 3.6 && ball.position.x > -3.6 && ball.position.z < -19.2){
-                    socket.emit('score', { left: true });
-                }
-                if(ball.position.x < 3.6 && ball.position.x > -3.6 && ball.position.z > 19.2){
-                    socket.emit('score', { left: false });
-                }
+                ball.position.x = player.position.x - 1;
             } else if (colliders['ball'].intersectsBox(walls['bot'])) {
-                ball.position.z = player.position.z + 1;
-                if(ball.position.x < 3.6 && ball.position.x > -3.6 && ball.position.z < -19.2){
-                    socket.emit('score', { left: true });
-                }
-                if(ball.position.x < 3.6 && ball.position.x > -3.6 && ball.position.z > 19.2){
-                    socket.emit('score', { left: false });
-                }
+                ball.position.x = player.position.x + 1;
             }
             colliders['ball'].setFromObject(ball);
             socket.emit('moveBall', { x: ball.position.x, y: ball.position.y, z: ball.position.z });
