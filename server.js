@@ -67,7 +67,7 @@ io.on('connection', (socket) => {
             ball.x = data.x;
             ball.y = data.y;
             ball.z = data.z;
-
+            console.log('Balle déplacée :', ball);
             io.emit('ballMoved', ball);
         });
 
@@ -78,7 +78,7 @@ io.on('connection', (socket) => {
             } else {
                 score.right++;
             }
-            io.emit('score', score);
+            io.emit('scored', score);
         });
 
         // Gestion de la déconnexion d'un joueur

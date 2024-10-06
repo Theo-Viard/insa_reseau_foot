@@ -15,3 +15,15 @@ export function createBall(ballData, scene, colliders) {
 export function updateBallPosition(data, ball) {
     ball.position.set(data.x, data.y, data.z);
 }
+
+export function checkGoalScored(ball, goals, score, updateScore) {
+    if (ball.position.z < -20) {
+        score.right++;
+        updateScore(score.left, score.right);
+        resetBall(ball);
+    } else if (ball.position.z > 20) {
+        score.left++;
+        updateScore(score.left, score.right);
+        resetBall(ball);
+    }
+}

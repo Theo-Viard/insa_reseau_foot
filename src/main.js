@@ -31,12 +31,6 @@ handleSocketEvents(socket, players, colliders, scene, (data) => {
 document.addEventListener('keydown', (event) => keysPressed[event.key] = true);
 document.addEventListener('keyup', (event) => keysPressed[event.key] = false);
 
-function animate() {
-    requestAnimationFrame(animate);
-    updatePlayerMovement(players, ball, keysPressed, colliders, moveSpeed, socket, walls);  // Passer socket ici
-    renderer.render(scene, camera);
-}
-animate();
 
 // Fonction pour mettre à jour la liste des joueurs
 function updatePlayerList(players) {
@@ -61,3 +55,11 @@ function updatePlayerList(players) {
         playerListDiv.appendChild(playerDiv);
     });
 }
+
+
+function animate() {
+    requestAnimationFrame(animate);
+    updatePlayerMovement(players, ball, keysPressed, colliders, moveSpeed, socket, walls);  // Passer socket ici
+    renderer.render(scene, camera);
+}
+animate();

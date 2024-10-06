@@ -54,10 +54,10 @@ export function createObjects(scene) {
     
     let walls = {};
     // Ajouter les surfaces de collision autour du terrain
-    walls[0] = createCollisionSurface(0, -20, 20, 2, 0.5, scene); // Surface de collision en bas
-    walls[1] = createCollisionSurface(0, 20, 20, 2, 0.5, scene); // Surface de collision en haut
-    walls[2] = createCollisionSurface(-10, 0, 0.5, 2, 40, scene); // Surface de collision à gauche
-    walls[3] = createCollisionSurface(10, 0, 0.5, 2, 40, scene); // Surface de collision à droite
+    walls['bot'] = createCollisionSurface(0, -20, 20, 2, 0.5, scene); // Surface de collision en bas
+    walls['top'] = createCollisionSurface(0, 20, 20, 2, 0.5, scene); // Surface de collision en haut
+    walls['gauche'] = createCollisionSurface(-10, 0, 0.5, 2, 40, scene); // Surface de collision à gauche
+    walls['droite'] = createCollisionSurface(10, 0, 0.5, 2, 40, scene); // Surface de collision à droite
 
     return { plane, line, circle, scoreSprite, walls };
 }
