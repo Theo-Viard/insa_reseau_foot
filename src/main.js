@@ -140,6 +140,3 @@ function animate() {
 }
 
 animate();
-
-
-animate();
