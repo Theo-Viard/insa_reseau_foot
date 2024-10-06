@@ -1,5 +1,5 @@
 import { createScene, createRenderer, createCamera, createObjects, createGoals } from './scene.js';
-import { createPlayerCube, updatePlayerMovement } from './player.js';
+import {updatePlayerMovement } from './player.js';
 import { createBall, updateBallPosition } from './ball.js';
 import { initSocket, handleSocketEvents } from './socket.js';
 
@@ -55,7 +55,6 @@ function updatePlayerList(players) {
         playerListDiv.appendChild(playerDiv);
     });
 }
-
 
 function animate() {
     requestAnimationFrame(animate);

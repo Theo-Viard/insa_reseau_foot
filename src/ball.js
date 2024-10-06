@@ -1,3 +1,5 @@
+let Ball = null;
+
 export function createBall(ballData, scene, colliders) {
     const ballGeometry = new THREE.SphereGeometry(0.5, 32, 32);
     const ballMaterial = new THREE.MeshBasicMaterial({ color: ballData.color });
@@ -9,21 +11,15 @@ export function createBall(ballData, scene, colliders) {
     const ballCollider = new THREE.Box3().setFromObject(ball);
     colliders['ball'] = ballCollider;
 
+    Ball = ball;
     return ball;
+}
+
+export function getBallData() {
+    return Ball;
 }
 
 export function updateBallPosition(data, ball) {
     ball.position.set(data.x, data.y, data.z);
-}
-
-export function checkGoalScored(ball, goals, score, updateScore) {
-    if (ball.position.z < -20) {
-        score.right++;
-        updateScore(score.left, score.right);
-        resetBall(ball);
-    } else if (ball.position.z > 20) {
-        score.left++;
-        updateScore(score.left, score.right);
-        resetBall(ball);
-    }
+    Ball = ball;
 }

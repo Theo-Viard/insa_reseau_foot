@@ -70,22 +70,41 @@ export function updatePlayerMovement(players, ball, keysPressed, colliders, move
             // Si collision avec la balle, déplacer la balle en fonction du mouvement du joueur
             ball.position.x += player.position.x - prevPosition.x;
             ball.position.z += player.position.z - prevPosition.z;
-            if(ball.position.x < 3.6 && ball.position.x > -3.6 && ball.position.z < -20){
-                socket.emit('score', { left: true });
-            }
-            if(ball.position.x < 3.6 && ball.position.x > -3.6 && ball.position.z > 20){
-                socket.emit('score', { left: false });
-            }
+            
             // Si la balle rencontre un mur, annuler le mouvement de la balle et du joueur et mettre la balle dernière le joueur
             if (colliders['ball'].intersectsBox(walls['gauche'])) {
                 ball.position.x = player.position.x + 1;
+                if(ball.position.x < 3.6 && ball.position.x > -3.6 && ball.position.z < -19.2){
+                    socket.emit('score', { left: true });
+                }
+                if(ball.position.x < 3.6 && ball.position.x > -3.6 && ball.position.z > 19.2){
+                    socket.emit('score', { left: false });
+                }
             } else if (colliders['ball'].intersectsBox(walls['droite'])) {
                 ball.position.x = player.position.x - 1;
+                if(ball.position.x < 3.6 && ball.position.x > -3.6 && ball.position.z < -19.2){
+                    socket.emit('score', { left: true });
+                }
+                if(ball.position.x < 3.6 && ball.position.x > -3.6 && ball.position.z > 19.2){
+                    socket.emit('score', { left: false });
+                }
             }
             if (colliders['ball'].intersectsBox(walls['top'])) {
                 ball.position.z = player.position.z - 1;
+                if(ball.position.x < 3.6 && ball.position.x > -3.6 && ball.position.z < -19.2){
+                    socket.emit('score', { left: true });
+                }
+                if(ball.position.x < 3.6 && ball.position.x > -3.6 && ball.position.z > 19.2){
+                    socket.emit('score', { left: false });
+                }
             } else if (colliders['ball'].intersectsBox(walls['bot'])) {
                 ball.position.z = player.position.z + 1;
+                if(ball.position.x < 3.6 && ball.position.x > -3.6 && ball.position.z < -19.2){
+                    socket.emit('score', { left: true });
+                }
+                if(ball.position.x < 3.6 && ball.position.x > -3.6 && ball.position.z > 19.2){
+                    socket.emit('score', { left: false });
+                }
             }
             colliders['ball'].setFromObject(ball);
             socket.emit('moveBall', { x: ball.position.x, y: ball.position.y, z: ball.position.z });

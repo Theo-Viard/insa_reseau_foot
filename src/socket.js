@@ -1,5 +1,6 @@
 import { createPlayerCube } from './player.js';
-import { createBall } from './ball.js';
+import { updateScore } from './scene.js';
+import { updateBallPosition, getBallData } from './ball.js';
 
 export function initSocket(players, colliders, scene, onBallInit, updatePlayerList) {
     const socket = io();
@@ -31,6 +32,13 @@ export function initSocket(players, colliders, scene, onBallInit, updatePlayerLi
             players[player.id] = createPlayerCube(player, scene, colliders);
             updatePlayerList(players);  // Mettre à jour la liste avec le nouveau joueur
         }
+    });
+
+    // Écouter l'événement scored et mettre à jour le score
+    socket.on('scored', (score, ballData) => {
+        console.log('Scored:', score);
+        updateScore(score); // Mettre à jour l'affichage du score
+        updateBallPosition(ballData, getBallData()); // Réinitialiser la balle au centre
     });
 
     return socket;

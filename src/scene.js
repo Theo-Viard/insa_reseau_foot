@@ -48,9 +48,7 @@ export function createObjects(scene) {
     circle.position.set(0, 0.1, 0);
     scene.add(circle);
 
-    const scoreSprite = createScoreSprite(`${0} - ${0}`);
-    scoreSprite.position.set(0, 12, 1);
-    scene.add(scoreSprite);
+    const scoreSprite = createScoreSprite(scene);
     
     let walls = {};
     // Ajouter les surfaces de collision autour du terrain
@@ -89,20 +87,36 @@ export function createGoals(scene) {
     createGoal(0, 20); // But à l'autre extrémité
 }
 
-function createScoreSprite(text) {
-    const texture = createTextTexture(text);
-    const material = new THREE.SpriteMaterial({ map: texture });
-    const sprite = new THREE.Sprite(material);
-    sprite.scale.set(10, 5, 1);
-    return sprite;
-}
 
-function createTextTexture(text) {
+
+/// Score
+
+export let score = { left: 0, right: 0 };
+let scoreSprite;
+
+function createTextTexture(text, fontSize = 64, color = 'white') {
     const canvas = document.createElement('canvas');
     const context = canvas.getContext('2d');
-    context.font = `64px Arial`;
-    context.fillStyle = 'white';
-    context.fillText(text, 0, 64);
+    context.font = `${fontSize}px Arial`;
+    context.fillStyle = color;
+    context.fillText(text, 0, fontSize);
+
     const texture = new THREE.CanvasTexture(canvas);
     return texture;
+}
+
+export function createScoreSprite(scene) {
+    const texture = createTextTexture('0 - 0');
+    const material = new THREE.SpriteMaterial({ map: texture });
+    scoreSprite = new THREE.Sprite(material);
+    scoreSprite.scale.set(10, 5, 1); 
+    scoreSprite.position.set(0, 12, 3);
+    scene.add(scoreSprite);
+}
+
+export function updateScore(Score) {
+    score = Score;
+    const texture = createTextTexture(`${score.left} - ${score.right}`);
+    scoreSprite.material.map = texture;
+    scoreSprite.material.needsUpdate = true;
 }

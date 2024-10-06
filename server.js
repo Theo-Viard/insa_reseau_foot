@@ -78,7 +78,7 @@ io.on('connection', (socket) => {
             } else {
                 score.right++;
             }
-            io.emit('scored', score);
+            io.emit('scored', score, ball);
         });
 
         // Gestion de la déconnexion d'un joueur
