@@ -6,36 +6,30 @@ export function initSocket(players, colliders, scene, world, onBallInit, updateP
     const socket = io();
     const pseudonym = prompt("Entrez votre pseudonyme :");
 
-    // Envoyer l'événement de nouveau joueur au serveur
     socket.emit('newPlayer', { pseudonym });
 
-    // Initialiser tous les joueurs lorsque la connexion est établie
     socket.on('init', (serverPlayers) => {
         Object.keys(serverPlayers).forEach(id => {
             if (!players[id]) {
-                players[id] = createPlayerCube(serverPlayers[id], scene, world);  
+                players[id] = createPlayerCube(serverPlayers[id], scene, world);
             }
         });
-
 
         updatePlayerList(serverPlayers);
     });
 
-    // Initialisation de la balle
     socket.on('ballInit', (ballData) => {
-        onBallInit(ballData);  
+        onBallInit(ballData);
     });
 
-    // Initialisation du score
     socket.on('scoreInit', (score) => {
-        updateScore(score);  
+        updateScore(score);
     });
 
-    // Ajout d'un nouveau joueur
     socket.on('newPlayer', (player) => {
         if (!players[player.id]) {
-            players[player.id] = createPlayerCube(player, scene, world);  
-            updatePlayerList(players);  
+            players[player.id] = createPlayerCube(player, scene, world);
+            updatePlayerList(players);
         }
     });
 
@@ -43,32 +37,30 @@ export function initSocket(players, colliders, scene, world, onBallInit, updateP
 }
 
 export function handleSocketEvents(socket, players, colliders, scene, onBallMoved, updatePlayerList, getBall) {
-    // Mettre à jour la position d'un joueur
-    socket.on('playerMoved', (player) => {
-        if (players[player.id]) {
-            players[player.id].position.set(player.x, player.y, player.z);
-            colliders[player.id].setFromObject(players[player.id]);  
+    socket.on('playerMoved', (data) => {
+        if (players[data.id]) {
+            players[data.id].userData.physicsBody.position.set(data.x, data.y, data.z);
+            players[data.id].userData.physicsBody.velocity.set(data.vx, data.vy, data.vz);
         }
     });
-
-    // Mettre à jour la position de la balle
+    
+    // Écouter les mises à jour des mouvements de la balle
     socket.on('ballMoved', (data) => {
-        onBallMoved(data);  
+        const ball = getBall();
+        ball.position.set(data.x, data.y, data.z);
+        ball.userData.physicsBody.velocity.set(data.vx, data.vy, data.vz);
     });
 
-    // Gestion de la déconnexion d'un joueur
-    socket.on('playerDisconnected', (id) => {
-        if (players[id]) {
-            scene.remove(players[id]);
-            delete players[id];
-            delete colliders[id];  
-            updatePlayerList(players);  
-        }
+    // Écouter les mises à jour du score
+    socket.on('score', (score) => {
+        updateScore(score);
     });
 
-    socket.on('scored', (score) => {
-        console.log('Scored:', score);
-        updateScore(score); 
-        onBallMoved({ x: 0, y: 0.5, z: 0 });  
+    socket.on('ballReset', (data) => {
+        const ball = getBall();
+        ball.position.set(data.x, data.y, data.z);
+        ball.userData.physicsBody.position.set(data.x, data.y, data.z);
+        ball.userData.physicsBody.velocity.set(0, 0, 0);
+        ball.userData.physicsBody.angularVelocity.set(0, 0, 0); // Réinitialiser l'angularVelocity
     });
 }

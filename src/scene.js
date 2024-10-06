@@ -1,25 +1,26 @@
 import * as CANNON from 'https://cdn.jsdelivr.net/npm/cannon-es@0.18.0/dist/cannon-es.js';
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.module.js';
+
 export function createGround(scene, world) {
-    // Créer le sol visible
     const geometry = new THREE.PlaneGeometry(20, 40);
     const material = new THREE.MeshBasicMaterial({ color: 0x808080, side: THREE.DoubleSide });
     const plane = new THREE.Mesh(geometry, material);
-    plane.rotation.x = -Math.PI / 2; 
+    plane.rotation.x = -Math.PI / 2;
     scene.add(plane);
 
-    // Créer le sol physique avec un matériau
-    const groundShape = new CANNON.Plane(); 
-    const groundMaterial = new CANNON.Material('groundMaterial'); // Matériau physique
+    const groundShape = new CANNON.Plane();
+    const groundMaterial = new CANNON.Material('groundMaterial');
     const groundBody = new CANNON.Body({
-        mass: 0, 
-        material: groundMaterial 
+        mass: 0,
+        material: groundMaterial
     });
     groundBody.addShape(groundShape);
-    groundBody.quaternion.setFromEuler(-Math.PI / 2, 0, 0); 
-    world.addBody(groundBody); 
+    groundBody.quaternion.setFromEuler(-Math.PI / 2, 0, 0);
+    world.addBody(groundBody);
 
-    return { plane, groundBody }; 
+    return { plane, groundBody };
 }
+
 export function createScene() {
     const scene = new THREE.Scene();
     return scene;
@@ -39,18 +40,27 @@ export function createCamera() {
     return camera;
 }
 
-function createCollisionSurface(x, z, width, height, depth, scene) {
+function createCollisionSurface(x, z, width, height, depth, scene, world) {
     const collisionGeometry = new THREE.BoxGeometry(width, height, depth);
     const collisionMaterial = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0 });
     const collisionSurface = new THREE.Mesh(collisionGeometry, collisionMaterial);
-    collisionSurface.position.set(x, height / 2, z); 
-    const wallCollider = new THREE.Box3().setFromObject(collisionSurface);
+    collisionSurface.position.set(x, height / 2, z);
     scene.add(collisionSurface);
 
-    return wallCollider
+    const shape = new CANNON.Box(new CANNON.Vec3(width / 2, height / 2, depth / 2));
+    const bodyMaterial = new CANNON.Material({ friction: 0.1, restitution: 0.7 }); // Adjust restitution for bounciness
+    const body = new CANNON.Body({
+        mass: 0,
+        position: new CANNON.Vec3(x, height / 2, z),
+        shape: shape,
+        material: bodyMaterial
+    });
+    world.addBody(body);
+
+    return body;
 }
 
-export function createObjects(scene) {
+export function createObjects(scene, world) {
     const geometryPlan = new THREE.PlaneGeometry(20, 40);
     const materialPlan = new THREE.MeshBasicMaterial({ color: 0x808080, side: THREE.DoubleSide });
     const plane = new THREE.Mesh(geometryPlan, materialPlan);
@@ -71,22 +81,20 @@ export function createObjects(scene) {
     scene.add(circle);
 
     const scoreSprite = createScoreSprite(scene);
-    
+
     let walls = {};
-    // Ajouter les surfaces de collision autour du terrain
-    walls['gauche'] = createCollisionSurface(0, -20, 20, 2, 0.5, scene); 
-    walls['droite'] = createCollisionSurface(0, 20, 20, 2, 0.5, scene); 
-    walls['bot'] = createCollisionSurface(-10, 0, 0.5, 2, 40, scene); 
-    walls['top'] = createCollisionSurface(10, 0, 0.5, 2, 40, scene); // Ajouter une surface de collision en haut du terrain
+    walls['gauche'] = createCollisionSurface(0, -20, 20, 2, 0.5, scene, world);
+    walls['droite'] = createCollisionSurface(0, 20, 20, 2, 0.5, scene, world);
+    walls['bot'] = createCollisionSurface(-10, 0, 0.5, 2, 40, scene, world);
+    walls['top'] = createCollisionSurface(10, 0, 0.5, 2, 40, scene, world);
 
     return { plane, line, circle, scoreSprite, walls };
 }
 
-export function createGoals(scene) {
+export function createGoals(scene, world) {
     function createGoal(x, z) {
         const postMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
 
-        // Poteaux
         const postGeometry = new THREE.BoxGeometry(0.2, 2.44, 0.2);
         const leftPost = new THREE.Mesh(postGeometry, postMaterial);
         leftPost.position.set(x - 3.66, 1.22, z);
@@ -96,22 +104,45 @@ export function createGoals(scene) {
         rightPost.position.set(x + 3.66, 1.22, z);
         scene.add(rightPost);
 
-        // Barre transversale
         const barGeometry = new THREE.BoxGeometry(0.2, 0.2, 7.32);
         const crossbar = new THREE.Mesh(barGeometry, postMaterial);
         crossbar.position.set(x, 2.44, z);
         crossbar.rotation.y = -Math.PI / 2;
         scene.add(crossbar);
+
+        // Ajouter des colliders pour les poteaux et la barre transversale
+        const postMaterialPhys = new CANNON.Material({ friction: 0.1, restitution: 0.7 }); // Adjust restitution for bounciness
+        const leftPostShape = new CANNON.Box(new CANNON.Vec3(0.1, 1.22, 0.1));
+        const leftPostBody = new CANNON.Body({
+            mass: 0,
+            position: new CANNON.Vec3(x - 3.66, 1.22, z),
+            shape: leftPostShape,
+            material: postMaterialPhys
+        });
+        world.addBody(leftPostBody);
+
+        const rightPostShape = new CANNON.Box(new CANNON.Vec3(0.1, 1.22, 0.1));
+        const rightPostBody = new CANNON.Body({
+            mass: 0,
+            position: new CANNON.Vec3(x + 3.66, 1.22, z),
+            shape: rightPostShape,
+            material: postMaterialPhys
+        });
+        world.addBody(rightPostBody);
+
+        const crossbarShape = new CANNON.Box(new CANNON.Vec3(0.1, 0.1, 3.66));
+        const crossbarBody = new CANNON.Body({
+            mass: 0,
+            position: new CANNON.Vec3(x, 2.44, z),
+            shape: crossbarShape,
+            material: postMaterialPhys
+        });
+        world.addBody(crossbarBody);
     }
 
-    // Ajouter les buts aux deux extrémités du terrain
-    createGoal(0, -20); // But à une extrémité
-    createGoal(0, 20); // But à l'autre extrémité
+    createGoal(0, -20);
+    createGoal(0, 20);
 }
-
-
-
-/// Score
 
 export let score = { left: 0, right: 0 };
 let scoreSprite;
@@ -131,7 +162,7 @@ export function createScoreSprite(scene) {
     const texture = createTextTexture('0 - 0');
     const material = new THREE.SpriteMaterial({ map: texture });
     scoreSprite = new THREE.Sprite(material);
-    scoreSprite.scale.set(10, 5, 1); 
+    scoreSprite.scale.set(10, 5, 1);
     scoreSprite.position.set(0, 12, 3);
     scene.add(scoreSprite);
 }

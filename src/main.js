@@ -1,44 +1,42 @@
 import * as CANNON from 'https://cdn.jsdelivr.net/npm/cannon-es@0.18.0/dist/cannon-es.js';
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.module.js';
-
 import { createScene, createRenderer, createCamera, createObjects, createGoals, createGround } from './scene.js';
 import { updatePlayerMovement } from './player.js';
 import { createBall, updateBallPosition } from './ball.js';
 import { initSocket, handleSocketEvents } from './socket.js';
-const keysPressed = {}; 
+
+const keysPressed = {};
 
 const world = new CANNON.World();
-world.gravity.set(0, -9.82, 0); 
+world.gravity.set(0, -9.82, 0);
 world.broadphase = new CANNON.NaiveBroadphase();
-world.solver.iterations = 20;  
+world.solver.iterations = 20;
 world.solver.tolerance = 0.001;
 
 const scene = createScene();
 const renderer = createRenderer();
 const camera = createCamera();
 document.body.appendChild(renderer.domElement);
-const moveSpeed = 0.1;
-// Créer le sol et les objets
-const { plane, groundBody } = createGround(scene, world);  
-const { plane: plane2, line, circle, scoreSprite, walls } = createObjects(scene);
-createGoals(scene);
+const moveSpeed = 15;
+
+const { plane, groundBody } = createGround(scene, world);
+const { plane: plane2, line, circle, scoreSprite, walls } = createObjects(scene, world);
+createGoals(scene, world);
 
 let players = {};
 let ball = null;
 let colliders = {};
 
-// Matériaux pour les contacts balle-sol
-const groundMaterial = groundBody.material;  
-const ballMaterial = new CANNON.Material(); 
+const groundMaterial = groundBody.material;
+const ballMaterial = new CANNON.Material();
 const ballGroundContactMaterial = new CANNON.ContactMaterial(
     groundMaterial, ballMaterial, { friction: 0.4, restitution: 0.3 }
 );
-world.addContactMaterial(ballGroundContactMaterial);  
+world.addContactMaterial(ballGroundContactMaterial);
 
-// Fonction pour mettre à jour la liste des joueurs
 function updatePlayerList(players) {
     const playerListDiv = document.getElementById('playerList');
-    playerListDiv.innerHTML = '';  
+    playerListDiv.innerHTML = '';
 
     Object.keys(players).forEach((id) => {
         const player = players[id];
@@ -59,11 +57,15 @@ function updatePlayerList(players) {
     });
 }
 
-// Initialiser le socket et récupérer l'ID du joueur
 const socket = initSocket(players, colliders, scene, world, (ballData) => {
-    const ballObject = createBall(ballData, scene, colliders, world);  
+    const ballObject = createBall(ballData, scene, colliders, world);
     ball = ballObject.ball;
     ball.userData.physicsBody = ballObject.ballBody;
+
+    // Ajouter un gestionnaire de collisions pour la balle
+    ball.userData.physicsBody.addEventListener('collide', (event) => {
+        createCollisionEffect(event.contact.bi.position);
+    });
 }, updatePlayerList);
 
 handleSocketEvents(socket, players, colliders, scene, (data) => {
@@ -73,29 +75,71 @@ handleSocketEvents(socket, players, colliders, scene, (data) => {
 document.addEventListener('keydown', (event) => keysPressed[event.key] = true);
 document.addEventListener('keyup', (event) => keysPressed[event.key] = false);
 
+function createCollisionEffect(position) {
+    const particleGeometry = new THREE.SphereGeometry(0.1, 16, 16);
+    const particleMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+    const particle = new THREE.Mesh(particleGeometry, particleMaterial);
+    particle.position.copy(position);
+    scene.add(particle);
+
+    // Faire disparaître la particule après un certain temps
+    setTimeout(() => {
+        scene.remove(particle);
+    }, 500);
+}
+
 function animate() {
     requestAnimationFrame(animate);
     const timeStep = 1 / 60;
     world.step(timeStep);
 
-    // Mettez à jour le mouvement du joueur
-    updatePlayerMovement(players, ball, keysPressed, colliders, moveSpeed, socket, walls); 
+    updatePlayerMovement(players, ball, keysPressed, colliders, moveSpeed, socket, walls);
 
-    // Synchroniser les joueurs
     Object.values(players).forEach(player => {
         if (player && player.userData && player.userData.physicsBody) {
             player.position.copy(player.userData.physicsBody.position);
             player.quaternion.copy(player.userData.physicsBody.quaternion);
+
+            // Émettre l'événement de mouvement du joueur
+            socket.emit('move', {
+                id: player.id,
+                x: player.position.x,
+                y: player.position.y,
+                z: player.position.z,
+                vx: player.userData.physicsBody.velocity.x,
+                vy: player.userData.physicsBody.velocity.y,
+                vz: player.userData.physicsBody.velocity.z
+            });
         }
     });
 
-    // Synchroniser la balle
     if (ball && ball.userData && ball.userData.physicsBody) {
         ball.position.copy(ball.userData.physicsBody.position);
         ball.quaternion.copy(ball.userData.physicsBody.quaternion);
+
+        // Émettre l'événement de mouvement de la balle
+        socket.emit('moveBall', {
+            x: ball.position.x,
+            y: ball.position.y,
+            z: ball.position.z,
+            vx: ball.userData.physicsBody.velocity.x,
+            vy: ball.userData.physicsBody.velocity.y,
+            vz: ball.userData.physicsBody.velocity.z
+        });
+
+        // Détecter si il y a un but
+        if (ball.position.z < -19.245 && ball.position.x < 3.6 && ball.position.x > -3.6) {
+            socket.emit('goal', 'right');
+        }
+        if (ball.position.z > 19.245 && ball.position.x < 3.6 && ball.position.x > -3.6) {
+            socket.emit('goal', 'left');
+        }
     }
 
-    // Render la scène
     renderer.render(scene, camera);
 }
+
+animate();
+
+
 animate();
