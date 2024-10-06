@@ -2,6 +2,8 @@ import { createPlayerCube } from './player.js';
 import { updateScore } from './scene.js';
 import { updateBallPosition, resetBall } from './ball.js';
 
+let serverPlayersLocal = {};
+
 export function initSocket(players, colliders, scene, world, onBallInit, updatePlayerList) {
     const socket = io();
     const pseudonym = prompt("Entrez votre pseudonyme :");
@@ -12,6 +14,7 @@ export function initSocket(players, colliders, scene, world, onBallInit, updateP
         Object.keys(serverPlayers).forEach(id => {
             if (!players[id]) {
                 players[id] = createPlayerCube(serverPlayers[id], scene, world);
+                serverPlayersLocal[id] = serverPlayers[id];
             }
         });
 
@@ -29,7 +32,8 @@ export function initSocket(players, colliders, scene, world, onBallInit, updateP
     socket.on('newPlayer', (player) => {
         if (!players[player.id]) {
             players[player.id] = createPlayerCube(player, scene, world);
-            updatePlayerList(players);
+            serverPlayersLocal[player.id] = player;
+            updatePlayerList(serverPlayersLocal);
         }
     });
 

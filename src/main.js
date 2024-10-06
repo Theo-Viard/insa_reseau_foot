@@ -39,6 +39,7 @@ function updatePlayerList(players) {
     playerListDiv.innerHTML = '';
 
     Object.keys(players).forEach((id) => {
+        console.log(players);
         const player = players[id];
         const playerDiv = document.createElement('div');
         playerDiv.className = 'player';
