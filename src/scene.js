@@ -1,3 +1,25 @@
+import * as CANNON from 'https://cdn.jsdelivr.net/npm/cannon-es@0.18.0/dist/cannon-es.js';
+export function createGround(scene, world) {
+    // Créer le sol visible
+    const geometry = new THREE.PlaneGeometry(20, 40);
+    const material = new THREE.MeshBasicMaterial({ color: 0x808080, side: THREE.DoubleSide });
+    const plane = new THREE.Mesh(geometry, material);
+    plane.rotation.x = -Math.PI / 2; 
+    scene.add(plane);
+
+    // Créer le sol physique avec un matériau
+    const groundShape = new CANNON.Plane(); 
+    const groundMaterial = new CANNON.Material('groundMaterial'); // Matériau physique
+    const groundBody = new CANNON.Body({
+        mass: 0, 
+        material: groundMaterial 
+    });
+    groundBody.addShape(groundShape);
+    groundBody.quaternion.setFromEuler(-Math.PI / 2, 0, 0); 
+    world.addBody(groundBody); 
+
+    return { plane, groundBody }; 
+}
 export function createScene() {
     const scene = new THREE.Scene();
     return scene;
@@ -21,7 +43,7 @@ function createCollisionSurface(x, z, width, height, depth, scene) {
     const collisionGeometry = new THREE.BoxGeometry(width, height, depth);
     const collisionMaterial = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0 });
     const collisionSurface = new THREE.Mesh(collisionGeometry, collisionMaterial);
-    collisionSurface.position.set(x, height / 2, z); // Positionner la surface de collision
+    collisionSurface.position.set(x, height / 2, z); 
     const wallCollider = new THREE.Box3().setFromObject(collisionSurface);
     scene.add(collisionSurface);
 

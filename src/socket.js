@@ -2,7 +2,7 @@ import { createPlayerCube } from './player.js';
 import { updateScore } from './scene.js';
 import { updateBallPosition, resetBall } from './ball.js';
 
-export function initSocket(players, colliders, scene, onBallInit, updatePlayerList) {
+export function initSocket(players, colliders, scene, world, onBallInit, updatePlayerList) {
     const socket = io();
     const pseudonym = prompt("Entrez votre pseudonyme :");
 
@@ -13,29 +13,29 @@ export function initSocket(players, colliders, scene, onBallInit, updatePlayerLi
     socket.on('init', (serverPlayers) => {
         Object.keys(serverPlayers).forEach(id => {
             if (!players[id]) {
-                players[id] = createPlayerCube(serverPlayers[id], scene, colliders);  // Passer colliders
+                players[id] = createPlayerCube(serverPlayers[id], scene, world);  
             }
         });
 
-        // Mettre à jour la liste des joueurs côté client
+
         updatePlayerList(serverPlayers);
     });
 
     // Initialisation de la balle
     socket.on('ballInit', (ballData) => {
-        onBallInit(ballData);  // Appelle la fonction pour créer la balle
+        onBallInit(ballData);  
     });
 
     // Initialisation du score
     socket.on('scoreInit', (score) => {
-        updateScore(score);  // Mettre à jour l'affichage du score
+        updateScore(score);  
     });
 
     // Ajout d'un nouveau joueur
     socket.on('newPlayer', (player) => {
         if (!players[player.id]) {
-            players[player.id] = createPlayerCube(player, scene, colliders);
-            updatePlayerList(players);  // Mettre à jour la liste avec le nouveau joueur
+            players[player.id] = createPlayerCube(player, scene, world);  
+            updatePlayerList(players);  
         }
     });
 
@@ -47,13 +47,13 @@ export function handleSocketEvents(socket, players, colliders, scene, onBallMove
     socket.on('playerMoved', (player) => {
         if (players[player.id]) {
             players[player.id].position.set(player.x, player.y, player.z);
-            colliders[player.id].setFromObject(players[player.id]);  // Mettre à jour le collider du joueur
+            colliders[player.id].setFromObject(players[player.id]);  
         }
     });
 
     // Mettre à jour la position de la balle
     socket.on('ballMoved', (data) => {
-        onBallMoved(data);  // Appelle la fonction pour déplacer la balle
+        onBallMoved(data);  
     });
 
     // Gestion de la déconnexion d'un joueur
@@ -61,14 +61,14 @@ export function handleSocketEvents(socket, players, colliders, scene, onBallMove
         if (players[id]) {
             scene.remove(players[id]);
             delete players[id];
-            delete colliders[id];  // Supprimer aussi le collider
-            updatePlayerList(players);  // Mettre à jour la liste des joueurs restants
+            delete colliders[id];  
+            updatePlayerList(players);  
         }
     });
 
     socket.on('scored', (score) => {
         console.log('Scored:', score);
-        updateScore(score); // Mettre à jour l'affichage du score
-        onBallMoved({ x: 0, y: 0.5, z: 0 });  // Réinitialiser la position de la balle
+        updateScore(score); 
+        onBallMoved({ x: 0, y: 0.5, z: 0 });  
     });
 }

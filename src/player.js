@@ -1,100 +1,54 @@
 import {resetBall} from './ball.js'
+import * as CANNON from 'https://cdn.jsdelivr.net/npm/cannon-es@0.18.0/dist/cannon-es.js';
 
-export function createPlayerCube(playerData, scene, colliders) {
+export function createPlayerCube(playerData, scene, world) {
     const geometry = new THREE.BoxGeometry(1, 1, 1);
     const material = new THREE.MeshBasicMaterial({ color: playerData.color });
     const cube = new THREE.Mesh(geometry, material);
     cube.position.set(playerData.x, playerData.y, playerData.z);
     scene.add(cube);
+    const shape = new CANNON.Box(new CANNON.Vec3(0.5, 0.5, 0.5));
+    const playerMaterial = new CANNON.Material({ friction: 0.05, restitution: 0.5 });  
+    const playerBody = new CANNON.Body({
+        mass: 1,
+        position: new CANNON.Vec3(playerData.x, playerData.y, playerData.z),
+        shape: shape,
+        material: playerMaterial  
+    });
+    world.addBody(playerBody);
 
-    // Créer le collider pour ce joueur
-    const collider = new THREE.Box3().setFromObject(cube);
-    colliders[playerData.id] = collider;
+    cube.userData.physicsBody = playerBody;
 
     return cube;
 }
 
 export function updatePlayerMovement(players, ball, keysPressed, colliders, moveSpeed, socket, walls) {
-
-    const player = players[socket.id];  // Utiliser l'ID du joueur pour se déplacer uniquement lui
+    const player = players[socket.id];  
     if (!player) return;
 
-    const prevPosition = player.position.clone();
-    let movementDetected = false;
+    const playerBody = player.userData.physicsBody;
+    const velocity = new CANNON.Vec3(0, 0, 0); 
 
+    // Contrôle des mouvements
     if (keysPressed['ArrowUp']) {
-        player.position.x += moveSpeed;
-        movementDetected = true;
+        velocity.x -= moveSpeed;
     }
     if (keysPressed['ArrowDown']) {
-        player.position.x -= moveSpeed;
-        movementDetected = true;
+        velocity.x += moveSpeed;  
     }
     if (keysPressed['ArrowLeft']) {
-        player.position.z -= moveSpeed;
-        movementDetected = true;
+        velocity.z -= moveSpeed;  
     }
     if (keysPressed['ArrowRight']) {
-        player.position.z += moveSpeed;
-        movementDetected = true;
+        velocity.z += moveSpeed;  
     }
 
-    if (movementDetected) {
-        // Mettre à jour le collider du joueur
-        colliders[socket.id].setFromObject(player);
-
-        // Vérifier les collisions avec les autres joueurs
-        let collisionDetected = false;
-        for (let id in colliders) {
-            if (id !== socket.id && colliders[socket.id].intersectsBox(colliders[id]) && id !== 'ball') {
-                collisionDetected = true;
-                break;
-            }
-        }
-
-        // Vérifier les collisions avec les murs
-        for (let id in walls) {
-            if (walls[id].intersectsBox(colliders[socket.id])) {
-                collisionDetected = true;
-                break;
-            }
-        }
-
-        // Si collision, annuler le mouvement
-        if (collisionDetected) {
-            player.position.copy(prevPosition);
-        } else {
-            // Envoi des nouvelles positions au serveur uniquement si pas de collision
-            socket.emit('move', { x: player.position.x, z: player.position.z });
-        }
-
-        // Vérifier les collisions avec la balle
-        if (colliders[socket.id].intersectsBox(colliders['ball'])) {
-            // Si collision avec la balle, déplacer la balle en fonction du mouvement du joueur
-            ball.position.x += player.position.x - prevPosition.x;
-            ball.position.z += player.position.z - prevPosition.z;
-
-            // Si la balle rencontre un mur, annuler le mouvement de la balle et du joueur et mettre la balle dernière le joueur
-            if (colliders['ball'].intersectsBox(walls['gauche'])) {
-                if (ball.position.x < 3.6 && ball.position.x > -3.6) {
-                    socket.emit('score', { left: true });
-                    resetBall(ball, colliders);
-                }
-                else { ball.position.z = player.position.z + 1; }
-            } else if (colliders['ball'].intersectsBox(walls['droite'])) {
-                if (ball.position.x < 3.6 && ball.position.x > -3.6) {
-                    socket.emit('score', { left: false });
-                    resetBall(ball, colliders);
-                }
-                else { ball.position.z = player.position.z - 1; }
-            }
-            if (colliders['ball'].intersectsBox(walls['top'])) {
-                ball.position.x = player.position.x - 1;
-            } else if (colliders['ball'].intersectsBox(walls['bot'])) {
-                ball.position.x = player.position.x + 1;
-            }
-            colliders['ball'].setFromObject(ball);
-            socket.emit('moveBall', { x: ball.position.x, y: ball.position.y, z: ball.position.z });
-        }
+    // Appliquer la vitesse au corps physique du joueur
+    if (!velocity.almostZero()) {
+        playerBody.velocity.set(velocity.x, playerBody.velocity.y, velocity.z);  
     }
+
+    // Mettre à jour la position du joueur en fonction de la physique
+    player.position.copy(playerBody.position);
+    player.quaternion.copy(playerBody.quaternion);
 }
