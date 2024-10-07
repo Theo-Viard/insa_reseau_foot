@@ -43,3 +43,5 @@ Assurez-vous d'avoir Node.js installé sur votre machine.
 - **Socket.io** : Outil pour la gestion des communications en temps réel entre le serveur et les clients.
 - **Express.js** : Framework Node.js léger pour la gestion du serveur web.
 - **Cannon.js** : Moteur physique Javascript 3D pour implémenter de la physique dans le jeu.
+
+**Projet réalisé par :** VIARD Théo et FAUCONNIER Sarah
