@@ -43,8 +43,10 @@ export function initSocket(players, colliders, scene, world, onBallInit, updateP
 export function handleSocketEvents(socket, players, colliders, scene, onBallMoved, updatePlayerList, getBall) {
     socket.on('playerMoved', (data) => {
         if (players[data.id]) {
-            // players[data.id].userData.physicsBody.position.set(data.x, data.y, data.z);
-            players[data.id].userData.physicsBody.velocity.set(data.vx, data.vy, data.vz);
+            const player = players[data.id];
+            const body = player.userData.physicsBody;
+            body.position.set(data.x, data.y, data.z);
+            body.velocity.set(data.vx, data.vy, data.vz);
         }
     });
 
@@ -55,9 +57,8 @@ export function handleSocketEvents(socket, players, colliders, scene, onBallMove
             ball.position.set(data.x, data.y, data.z);
             ball.userData.physicsBody.velocity.set(data.vx, data.vy, data.vz);
         } catch (error) {
-
+            console.error(error);
         }
-
     });
 
     // Écouter les mises à jour du score
@@ -73,8 +74,7 @@ export function handleSocketEvents(socket, players, colliders, scene, onBallMove
             ball.userData.physicsBody.velocity.set(0, 0, 0);
             ball.userData.physicsBody.angularVelocity.set(0, 0, 0); // Réinitialiser l'angularVelocity
         } catch (error) {
-
+            console.error(error);
         }
-
     });
 }

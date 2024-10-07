@@ -100,14 +100,6 @@ function animate() {
         if (player && player.userData && player.userData.physicsBody) {
             player.position.copy(player.userData.physicsBody.position);
             player.quaternion.copy(player.userData.physicsBody.quaternion);
-
-            // Émettre l'événement de mouvement du joueur
-            socket.emit('move', {
-                id: player.id,
-                vx: player.userData.physicsBody.velocity.x,
-                vy: player.userData.physicsBody.velocity.y,
-                vz: player.userData.physicsBody.velocity.z
-            });
         }
     });
 
@@ -135,5 +127,7 @@ function animate() {
     }
     renderer.render(scene, camera);
 }
+
+animate();
 
 animate();

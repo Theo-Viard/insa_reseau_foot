@@ -61,6 +61,17 @@ export function updatePlayerMovement(players, ball, keysPressed, colliders, move
     // Appliquer la vitesse au corps physique du joueur
     if (!velocity.almostZero()) {
         playerBody.velocity.set(velocity.x, playerBody.velocity.y, velocity.z);
+
+        // Émettre l'événement de mouvement du joueur
+        socket.emit('move', {
+            id: player.id,
+            x: playerBody.position.x,
+            y: playerBody.position.y,
+            z: playerBody.position.z,
+            vx: playerBody.velocity.x,
+            vy: playerBody.velocity.y,
+            vz: playerBody.velocity.z
+        });
     }
 
     // Mettre à jour la position du joueur en fonction de la physique
