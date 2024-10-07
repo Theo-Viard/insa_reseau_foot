@@ -104,9 +104,6 @@ function animate() {
             // Émettre l'événement de mouvement du joueur
             socket.emit('move', {
                 id: player.id,
-                x: player.position.x,
-                y: player.position.y,
-                z: player.position.z,
                 vx: player.userData.physicsBody.velocity.x,
                 vy: player.userData.physicsBody.velocity.y,
                 vz: player.userData.physicsBody.velocity.z
@@ -136,7 +133,6 @@ function animate() {
             socket.emit('goal', 'left');
         }
     }
-
     renderer.render(scene, camera);
 }
 

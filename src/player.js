@@ -26,6 +26,10 @@ export function createPlayerCube(playerData, scene, world) {
     playerBody.velocity.y = 0;
     playerBody.angularVelocity.set(0, 0, 0);
 
+    playerBody.velocity.set(0, 0, 0);
+    playerBody.angularVelocity.set(0, 0, 0);
+
+
     world.addBody(playerBody);
 
     cube.userData.physicsBody = playerBody;
@@ -62,13 +66,4 @@ export function updatePlayerMovement(players, ball, keysPressed, colliders, move
     // Mettre à jour la position du joueur en fonction de la physique
     player.position.copy(playerBody.position);
     player.quaternion.copy(playerBody.quaternion);
-
-    socket.emit('move', {
-        x: player.position.x,
-        y: player.position.y,
-        z: player.position.z,
-        vx: playerBody.velocity.x,
-        vy: playerBody.velocity.y,
-        vz: playerBody.velocity.z
-    });
 }

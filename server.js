@@ -73,9 +73,6 @@ io.on('connection', (socket) => {
 
         socket.on('move', (data) => {
             if (players[socket.id]) {
-                players[socket.id].x = data.x;
-                players[socket.id].y = data.y;
-                players[socket.id].z = data.z;
                 players[socket.id].vx = data.vx;
                 players[socket.id].vy = data.vy;
                 players[socket.id].vz = data.vz;

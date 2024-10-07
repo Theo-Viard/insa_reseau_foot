@@ -43,16 +43,21 @@ export function initSocket(players, colliders, scene, world, onBallInit, updateP
 export function handleSocketEvents(socket, players, colliders, scene, onBallMoved, updatePlayerList, getBall) {
     socket.on('playerMoved', (data) => {
         if (players[data.id]) {
-            players[data.id].userData.physicsBody.position.set(data.x, data.y, data.z);
+            // players[data.id].userData.physicsBody.position.set(data.x, data.y, data.z);
             players[data.id].userData.physicsBody.velocity.set(data.vx, data.vy, data.vz);
         }
     });
-    
+
     // Écouter les mises à jour des mouvements de la balle
     socket.on('ballMoved', (data) => {
         const ball = getBall();
-        ball.position.set(data.x, data.y, data.z);
-        ball.userData.physicsBody.velocity.set(data.vx, data.vy, data.vz);
+        try {
+            ball.position.set(data.x, data.y, data.z);
+            ball.userData.physicsBody.velocity.set(data.vx, data.vy, data.vz);
+        } catch (error) {
+
+        }
+
     });
 
     // Écouter les mises à jour du score
@@ -62,9 +67,14 @@ export function handleSocketEvents(socket, players, colliders, scene, onBallMove
 
     socket.on('ballReset', (data) => {
         const ball = getBall();
-        ball.position.set(data.x, data.y, data.z);
-        ball.userData.physicsBody.position.set(data.x, data.y, data.z);
-        ball.userData.physicsBody.velocity.set(0, 0, 0);
-        ball.userData.physicsBody.angularVelocity.set(0, 0, 0); // Réinitialiser l'angularVelocity
+        try {
+            ball.position.set(data.x, data.y, data.z);
+            ball.userData.physicsBody.position.set(data.x, data.y, data.z);
+            ball.userData.physicsBody.velocity.set(0, 0, 0);
+            ball.userData.physicsBody.angularVelocity.set(0, 0, 0); // Réinitialiser l'angularVelocity
+        } catch (error) {
+
+        }
+
     });
 }
