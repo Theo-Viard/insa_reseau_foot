@@ -34,20 +34,12 @@ Assurez-vous d'avoir Node.js installé sur votre machine.
 
 - **Déplacements :** Utilisez les flèches directionnelles pour bouger votre joueur.
 - **But du jeu :** Essayez de marquer des buts contre l'équipe adverse.
-- **Mode de jeu :** 2v2 en ligne.
+- **Mode de jeu :** Multijoueur en ligne.
 
-## TODO (Liste des Améliorations)
-
-- **Gestion du score :** Ajouter un affichage en temps réel du score pour chaque équipe.
-- **Ajout de la balle :** Implémenter la balle et sa physique pour des interactions plus réalistes.
-- **File d'attente :** Mettre en place une file d'attente pour les nouveaux joueurs se connectant au jeu.
-- **Timer de partie :** Intégrer un chronomètre qui détermine la durée des matchs.
-- **Animations :** Ajouter des animations pour les joueurs (course, tir, célébrations de buts).
-- **Amélioration des graphismes :** Optimiser les modèles 3D et ajouter des textures.
-- **Sélection d'équipe :** Permettre aux joueurs de choisir leur équipe avant de rejoindre un match.
 
 ## Technologies Utilisées
 
 - **Three.js** : Librairie pour la création de graphismes 3D dans le navigateur.
 - **Socket.io** : Outil pour la gestion des communications en temps réel entre le serveur et les clients.
 - **Express.js** : Framework Node.js léger pour la gestion du serveur web.
+- **Cannon.js** : Moteur physique Javascript 3D pour implémenter de la physique dans le jeu.
