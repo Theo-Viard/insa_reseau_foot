@@ -36,7 +36,7 @@ export function createPlayerCube(playerData, scene, world) {
 
     return cube;
 }
-
+let speed = 15;
 export function updatePlayerMovement(players, ball, keysPressed, colliders, moveSpeed, socket, walls) {
     const player = players[socket.id];
     if (!player) return;
@@ -46,17 +46,27 @@ export function updatePlayerMovement(players, ball, keysPressed, colliders, move
 
     // Contrôle des mouvements
     if (keysPressed['ArrowUp']) {
-        velocity.x += moveSpeed;
+        velocity.x += speed;
     }
     if (keysPressed['ArrowDown']) {
-        velocity.x -= moveSpeed;
+        velocity.x -= speed;
     }
     if (keysPressed['ArrowLeft']) {
-        velocity.z -= moveSpeed;
+        velocity.z -= speed;
     }
     if (keysPressed['ArrowRight']) {
-        velocity.z += moveSpeed;
+        velocity.z += speed;
     }
+    // Accélération de la vitesse si la touche Maj est enfoncée
+    if (keysPressed['Shift']) {
+        if (speed < 30) {
+            speed += 0.05;
+        }
+    }
+    else {
+        speed = 15;
+    }
+
 
     // Appliquer la vitesse au corps physique du joueur
     if (!velocity.almostZero()) {
