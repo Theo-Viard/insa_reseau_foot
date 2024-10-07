@@ -2,14 +2,15 @@ import * as CANNON from 'https://cdn.jsdelivr.net/npm/cannon-es@0.18.0/dist/cann
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.module.js';
 
 export function createBall(ballData, scene, colliders, world) {
+    
     const ballGeometry = new THREE.SphereGeometry(0.5, 32, 32);
     const ballMaterial = new THREE.MeshBasicMaterial({ color: ballData.color });
     const ball = new THREE.Mesh(ballGeometry, ballMaterial);
     ball.position.set(ballData.x, ballData.y, ballData.z);
     scene.add(ball);
-
+    // Création du corps physique de la balle
     const ballShape = new CANNON.Sphere(0.5);
-    const ballMaterialPhys = new CANNON.Material({ friction: 0.1, restitution: 0.9 }); // Adjust restitution for bounciness
+    const ballMaterialPhys = new CANNON.Material({ friction: 0.1, restitution: 0.9 }); 
     const ballBody = new CANNON.Body({
         mass: 1,
         position: new CANNON.Vec3(ballData.x, ballData.y, ballData.z),

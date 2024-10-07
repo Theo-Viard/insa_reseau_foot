@@ -50,7 +50,7 @@ export function handleSocketEvents(socket, players, colliders, scene, onBallMove
         }
     });
 
-    // Écouter les mises à jour des mouvements de la balle
+    // Mises à jour des mouvements de la balle
     socket.on('ballMoved', (data) => {
         const ball = getBall();
         try {
@@ -61,7 +61,7 @@ export function handleSocketEvents(socket, players, colliders, scene, onBallMove
         }
     });
 
-    // Écouter les mises à jour du score
+    // Mises à jour du score
     socket.on('score', (score) => {
         updateScore(score);
     });
@@ -72,7 +72,7 @@ export function handleSocketEvents(socket, players, colliders, scene, onBallMove
             ball.position.set(data.x, data.y, data.z);
             ball.userData.physicsBody.position.set(data.x, data.y, data.z);
             ball.userData.physicsBody.velocity.set(0, 0, 0);
-            ball.userData.physicsBody.angularVelocity.set(0, 0, 0); // Réinitialiser l'angularVelocity
+            ball.userData.physicsBody.angularVelocity.set(0, 0, 0); 
         } catch (error) {
             console.error(error);
         }

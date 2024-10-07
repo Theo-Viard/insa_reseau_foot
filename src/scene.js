@@ -7,7 +7,7 @@ export function createGround(scene, world) {
     const plane = new THREE.Mesh(geometry, material);
     plane.rotation.x = -Math.PI / 2;
     scene.add(plane);
-
+    // Création du corps physique du sol
     const groundShape = new CANNON.Plane();
     const groundMaterial = new CANNON.Material('groundMaterial');
     const groundBody = new CANNON.Body({
@@ -23,6 +23,8 @@ export function createGround(scene, world) {
 
 export function createScene() {
     const scene = new THREE.Scene();
+    const loader = new THREE.TextureLoader();
+    scene.background = loader.load( 'https://media.istockphoto.com/id/1502846052/fr/photo/terrain-textur%C3%A9-de-jeu-de-football-avec-le-brouillard-de-n%C3%A9on-centre-milieu-de-terrain.jpg?s=1024x1024&w=is&k=20&c=BRsvbxYMbiJrYSVxlwYnWVeiHqiRN5FpQTRkJdHt4Oc=' );
     return scene;
 }
 
@@ -48,7 +50,7 @@ function createCollisionSurface(x, z, width, height, depth, scene, world) {
     scene.add(collisionSurface);
 
     const shape = new CANNON.Box(new CANNON.Vec3(width / 2, height / 2, depth / 2));
-    const bodyMaterial = new CANNON.Material({ friction: 0.1, restitution: 0.7 }); // Adjust restitution for bounciness
+    const bodyMaterial = new CANNON.Material({ friction: 0.1, restitution: 0.7 }); 
     const body = new CANNON.Body({
         mass: 0,
         position: new CANNON.Vec3(x, height / 2, z),
@@ -59,10 +61,10 @@ function createCollisionSurface(x, z, width, height, depth, scene, world) {
 
     return body;
 }
-
+// Création du terrain, des lignes du terrain et des murs
 export function createObjects(scene, world) {
     const geometryPlan = new THREE.PlaneGeometry(20, 40);
-    const materialPlan = new THREE.MeshBasicMaterial({ color: 0x808080, side: THREE.DoubleSide });
+    const materialPlan = new THREE.MeshBasicMaterial({ color: 0x52b14c, side: THREE.DoubleSide });
     const plane = new THREE.Mesh(geometryPlan, materialPlan);
     plane.rotation.x = -Math.PI / 2;
     scene.add(plane);
@@ -90,7 +92,7 @@ export function createObjects(scene, world) {
 
     return { plane, line, circle, scoreSprite, walls };
 }
-
+// Création des buts
 export function createGoals(scene, world) {
     function createGoal(x, z) {
         const postMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
@@ -111,7 +113,7 @@ export function createGoals(scene, world) {
         scene.add(crossbar);
 
         // Ajouter des colliders pour les poteaux et la barre transversale
-        const postMaterialPhys = new CANNON.Material({ friction: 0.1, restitution: 0.7 }); // Adjust restitution for bounciness
+        const postMaterialPhys = new CANNON.Material({ friction: 0.1, restitution: 0.7 }); 
         const leftPostShape = new CANNON.Box(new CANNON.Vec3(0.1, 1.22, 0.1));
         const leftPostBody = new CANNON.Body({
             mass: 0,
